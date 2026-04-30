@@ -6,9 +6,13 @@
         x:Class="QuickGraphics.Ide.MainWindow"
         Title="QuickGraphics.Ide">
 
-    <Grid x:Name="MainGrid" RowDefinitions="Auto,*" ColumnDefinitions="2*,*">
+    <Grid RowDefinitions="Auto,*">
+        <Button Margin="5" Click="RunButton_Click" HorizontalAlignment="Center">Compile and run</Button>
 
-        <Button Grid.ColumnSpan="2" Margin="5" Click="RunButton_Click" HorizontalAlignment="Center">Compile and run</Button>
-
+        <Grid Grid.Row="1" Background="#5d6b99">
+            <Grid x:Name="MainGrid" Margin="10" ColumnDefinitions="*">
+                <GridSplitter x:Name="Splitter" Grid.Column="1" ResizeDirection="Columns" Background="#5d6b99" IsVisible="True" />
+            </Grid>
+        </Grid>
     </Grid>
 </Window>

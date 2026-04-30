@@ -84,6 +84,7 @@ global using static QuickGraphics.Colors;
         if (_canvasView != null)
         {
             MainGrid.Children.Remove(_canvasView);
+            MainGrid.ColumnDefinitions = new ColumnDefinitions("*");
             _canvasView = null;
             return;
         }
@@ -93,8 +94,9 @@ global using static QuickGraphics.Colors;
         if (assembly != null)
         {
             _canvasView = await CanvasView.RunProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
-            Grid.SetRow(_canvasView, 1);
-            Grid.SetColumn(_canvasView, 1);
+            Grid.SetColumn(_canvasView, 2);
+            MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,5,*");
+            Splitter.IsVisible = true;
             MainGrid.Children.Add(_canvasView);
         }
     }
