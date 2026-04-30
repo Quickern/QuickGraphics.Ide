@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using CSharpEditor;
@@ -60,10 +57,15 @@ public partial class MainWindow : Window
 
         string sourceText = "await ForCanvas(640, 480);";
 
-        string usings = @"global using QuickGraphics;
-global using static QuickGraphics.StaticCanvas;
-global using static QuickGraphics.Colors;
-";
+        string usings = string.Empty;
+        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.Globals.cs"))
+        {
+            if (stream != null)
+            {
+                using StreamReader reader = new StreamReader(stream);
+                usings = await reader.ReadToEndAsync();
+            }
+        }
 
         _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication));
 

@@ -1,7 +1,4 @@
-﻿using Avalonia;
-using System;
-
-namespace QuickGraphics.Ide;
+﻿namespace QuickGraphics.Ide;
 
 class Program
 {
