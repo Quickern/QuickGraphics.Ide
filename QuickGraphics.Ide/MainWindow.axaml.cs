@@ -55,7 +55,7 @@ public partial class MainWindow : Window
             ..GetReferences(assembly)
         ];
 
-        string sourceText = "await ForCanvas(640, 480);";
+        string sourceText = "await ForCanvas(640, 480);\n\n";
 
         string usings = string.Empty;
         using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.Globals.cs"))
@@ -87,6 +87,7 @@ public partial class MainWindow : Window
         {
             MainGrid.Children.Remove(_canvasView);
             MainGrid.ColumnDefinitions = new ColumnDefinitions("*");
+            Splitter.IsVisible = false;
             _canvasView = null;
             return;
         }
@@ -96,8 +97,10 @@ public partial class MainWindow : Window
         if (assembly != null)
         {
             _canvasView = await CanvasView.RunProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
-            Grid.SetColumn(_canvasView, 2);
             MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,5,*");
+            Grid.SetColumn(_canvasView, 2);
+            _canvasView.VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top;
+            _canvasView.HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center;
             Splitter.IsVisible = true;
             MainGrid.Children.Add(_canvasView);
         }
