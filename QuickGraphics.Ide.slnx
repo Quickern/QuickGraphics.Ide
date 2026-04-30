@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/CSharpEditor/">
+    <Project Path="CSharpEditor/CSharpEditor/CSharpEditor.csproj" />
+    <Project Path="CSharpEditor/CSharpEditorDemo/CSharpEditorDemo.csproj" />
+  </Folder>
+
+  <Folder Name="/QuickGraphics/">
+    <Project Path="QuickGraphics/QuickGraphics.Avalonia.Common/QuickGraphics.Avalonia.Common.csproj" />
+    <Project Path="QuickGraphics/QuickGraphics/QuickGraphics.csproj" />
+  </Folder>
+
+  <Folder Name="/QuickGraphics/Samples/">
+    <Project Path="QuickGraphics/Samples/Simple/Simple.csproj" />
+    <Project Path="QuickGraphics/Samples/Animation/Animation.csproj" />
+  </Folder>
+
+  <Folder Name="/QuickGraphics/Nvg.NET/">
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Blending/Nvg.Blending.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.FontStash/Nvg.FontStash.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Graphics/Nvg.Graphics.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Images/Nvg.Images.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Paths/Nvg.Paths.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Scissoring/Nvg.Scissoring.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Text/Nvg.Text.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Tools/Nvg.Tools.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/components/Nvg.Transforms/Nvg.Transforms.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/Nvg.Common/Nvg.Common.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/Nvg.Core/Nvg.Core.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/Nvg/Nvg.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/rendering/Nvg.Rendering.OpenGL/Nvg.Rendering.OpenGL.csproj" />
+    <Project Path="QuickGraphics/Nvg.NET/src/rendering/Nvg.Rendering/Nvg.Rendering.csproj" />
+  </Folder>
+
+  <Project Path="QuickGraphics.Ide/QuickGraphics.Ide.csproj" />
+</Solution>

@@ -1,0 +1,6 @@
+[submodule "QuickGraphics"]
+	path = QuickGraphics
+	url = git@github.com:Quickern/QuickGraphics.git
+[submodule "CSharpEditor"]
+	path = CSharpEditor
+	url = git@github.com:Quickern/CSharpEditor.git
