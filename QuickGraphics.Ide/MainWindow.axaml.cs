@@ -11,6 +11,7 @@ namespace QuickGraphics.Ide;
 public partial class MainWindow : Window
 {
     private Editor? _editor;
+    private ProgramRunner? _runner;
 
     public MainWindow()
     {
@@ -74,8 +75,6 @@ public partial class MainWindow : Window
         MainGrid.Children.Add(_editor);
     }
 
-    private CanvasView? _canvasView;
-
     private async void RunButton_Click(object? sender, RoutedEventArgs e)
     {
         if (_editor == null)
@@ -83,12 +82,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_canvasView != null)
+        if (_runner != null)
         {
-            MainGrid.Children.Remove(_canvasView);
+            MainGrid.Children.Remove(_runner);
             MainGrid.ColumnDefinitions = new ColumnDefinitions("*");
             Splitter.IsVisible = false;
-            _canvasView = null;
+            _runner = null;
             return;
         }
 
@@ -96,13 +95,14 @@ public partial class MainWindow : Window
 
         if (assembly != null)
         {
-            _canvasView = await CanvasView.RunProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
+            _runner = new ProgramRunner();
+
             MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,5,*");
-            Grid.SetColumn(_canvasView, 2);
-            _canvasView.VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Top;
-            _canvasView.HorizontalAlignment = global::Avalonia.Layout.HorizontalAlignment.Center;
+            Grid.SetColumn(_runner, 2);
             Splitter.IsVisible = true;
-            MainGrid.Children.Add(_canvasView);
+            MainGrid.Children.Add(_runner);
+
+            _ = _runner.RunProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
         }
     }
 }
