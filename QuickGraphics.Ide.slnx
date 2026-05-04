@@ -10,7 +10,9 @@
   </Folder>
 
   <Folder Name="/QuickGraphics/Samples/">
+    <Project Path="QuickGraphics/Samples/Eyes/Eyes.csproj" />
     <Project Path="QuickGraphics/Samples/Simple/Simple.csproj" />
+    <Project Path="QuickGraphics/Samples/AimTarget/AimTarget.csproj" />
     <Project Path="QuickGraphics/Samples/Animation/Animation.csproj" />
   </Folder>
 
