@@ -1,6 +1,7 @@
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using CSharpEditor;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -75,9 +76,10 @@ public partial class MainWindow : Window
         MainGrid.Children.Add(_editor);
     }
 
-    private async void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RunOrStopAsync();
+    private void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RestartAsync();
+    private void StopButton_Click(object? sender, RoutedEventArgs e) => _ = StopAsync();
 
-    private async Task RunOrStopAsync()
+    private async Task RestartAsync()
     {
         if (_editor == null)
         {
@@ -87,7 +89,6 @@ public partial class MainWindow : Window
         if (_canvasView != null || _logView != null)
         {
             await StopAsync();
-            return;
         }
 
         await RunAsync();
@@ -95,6 +96,10 @@ public partial class MainWindow : Window
 
     private async Task RunAsync()
     {
+        RunButton.IsEnabled = false;
+        RestartButton.IsEnabled = false;
+        StopButton.IsEnabled = false;
+
         Assembly assembly = (await _editor.Compile(_editor.SynchronousBreak, _editor.AsynchronousBreak)).Assembly;
 
         if (assembly == null)
@@ -114,6 +119,8 @@ public partial class MainWindow : Window
 
             RunnerSplitter.IsVisible = true;
             RunnerGrid.IsVisible = true;
+
+            SetButtonState(true);
         }
 
         async Task GetCanvasViewAsync(QgAvaloniaProgram program)
@@ -155,6 +162,23 @@ public partial class MainWindow : Window
         RunnerSplitter.IsVisible = false;
         RunnerGrid.IsVisible = false;
 
+        SetButtonState(false);
+
         MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,0,0");
+    }
+
+    private void SetButtonState(bool isPlaying)
+    {
+        RunButton.IsVisible = !isPlaying;
+        RunButton.IsEnabled = true;
+
+        RestartButton.IsVisible = isPlaying;
+        RestartButton.IsEnabled = true;
+
+        StopButton.IsEnabled = isPlaying;
+        if (this.TryFindResource(isPlaying ? "Icon.Stop" : "Icon.Stop.Disabled", out object? icon))
+        {
+            StopButtonImage.Source = (IImage)icon!;
+        }
     }
 }

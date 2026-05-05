@@ -1,13 +1,117 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:icons="using:QuickGraphics.Avalonia.Common.Icons"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="QuickGraphics.Ide.MainWindow"
         Title="QuickGraphics.Ide">
 
+    <Window.Resources>
+        <ResourceDictionary>
+            <DrawingImage x:Key="Icon.Play">
+                <DrawingImage.Drawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <Geometry>M 9 7 L 17 12 L 9 17 Z</Geometry>
+                    </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                    <Pen Brush="#5d6b99"
+                        Thickness="2"
+                        LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+
+            <!-- ⏹ Stop -->
+            <DrawingImage x:Key="Icon.Stop">
+                <DrawingImage.Drawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <Geometry>M 7 7 H 17 V 17 H 7 Z</Geometry>
+                    </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                    <Pen Brush="#5d6b99"
+                        Thickness="2"
+                        LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="Icon.Stop.Disabled">
+                <DrawingImage.Drawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <Geometry>M 7 7 H 17 V 17 H 7 Z</Geometry>
+                    </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                    <Pen Brush="DarkGray"
+                        Thickness="2"
+                        LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+
+            <!-- 🔄 Restart (Play + subtle refresh arrow) -->
+            <DrawingImage x:Key="Icon.Restart">
+                <DrawingImage.Drawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Geometry>
+                    <GeometryGroup>
+                        <!-- Play triangle -->
+                        <Geometry>M 9 7 L 16 12 L 9 17 Z</Geometry>
+
+                        <!-- Small circular arrow -->
+                        <Geometry>M 15.5 15.5 A 3.5 3.5 0 1 1 13 19</Geometry>
+
+                        <!-- Arrow head -->
+                        <Geometry>M 13 19 L 13 16.5</Geometry>
+                        <Geometry>M 13 19 L 15.5 19</Geometry>
+                    </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                    <GeometryDrawing.Pen>
+                    <Pen Brush="#5d6b99"
+                        Thickness="2"
+                        LineJoin="Round" />
+                    </GeometryDrawing.Pen>
+                </GeometryDrawing>
+                </DrawingImage.Drawing>
+            </DrawingImage>
+
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid RowDefinitions="Auto,*">
-        <Button Margin="5" Click="RunButton_Click" HorizontalAlignment="Center">Compile and run</Button>
+        <Grid Grid.IsSharedSizeScope="True">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" SharedSizeGroup="TitleGroup" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" SharedSizeGroup="TitleGroup" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock x:Name="Title" Foreground="Gray" FontStyle="Italic" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" Text="New.cs" />
+
+            <StackPanel Grid.Column="2" Margin="5,5,20,5" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button HotKey="F5" BorderThickness="0" CornerRadius="4,0,0,4" x:Name="RunButton" Click="RunButton_Click">
+                    <Image Width="20" Height="20" Source="{StaticResource Icon.Play}" />
+                </Button>
+                <Button BorderThickness="0" CornerRadius="4,0,0,4" x:Name="RestartButton" Click="RunButton_Click" IsVisible="False">
+                    <Image Width="20" Height="20" Source="{StaticResource Icon.Restart}" />
+                </Button>
+                <Canvas Background="Black" Width="1" VerticalAlignment="Stretch" />
+                <Button BorderThickness="0" CornerRadius="0,4,4,0" x:Name="StopButton" Click="StopButton_Click" IsEnabled="False">
+                    <Image x:Name="StopButtonImage" Width="20" Height="20" Source="{StaticResource Icon.Stop.Disabled}" />
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <Grid Grid.Row="1" Background="#5d6b99">
             <Grid x:Name="MainGrid" Margin="10" ColumnDefinitions="2*,0,0">
