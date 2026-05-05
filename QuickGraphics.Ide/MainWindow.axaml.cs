@@ -2,6 +2,7 @@ using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using CSharpEditor;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,6 +12,8 @@ namespace QuickGraphics.Ide;
 
 public partial class MainWindow : Window
 {
+    private string? _originalPath;
+
     private Editor? _editor;
 
     private CanvasView? _canvasView;
@@ -72,8 +75,46 @@ public partial class MainWindow : Window
         }
 
         _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
+        _editor.SaveRequested += OnSave;
 
         MainGrid.Children.Add(_editor);
+    }
+
+    private async void OnSave(object? sender, SaveEventArgs args)
+    {
+        if (_originalPath == null)
+        {
+            TopLevel topLevel = TopLevel.GetTopLevel(this);
+
+            IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                FileTypeChoices = [
+                    new FilePickerFileType("C#")
+                    {
+                        Patterns = [ "*.cs" ],
+                        AppleUniformTypeIdentifiers = [ "com.microsoft.csharp-source" ],
+                        MimeTypes = [ "text/x-csharp" ]
+                    }
+                ]
+            });
+
+            if (file == null)
+            {
+                return;
+            }
+
+            await using Stream stream = await file.OpenWriteAsync();
+            await using StreamWriter writer = new StreamWriter(stream);
+
+            await writer.WriteAsync(args.Text);
+
+            Title.Text = file.Name;
+            _originalPath = file.Path.AbsolutePath;
+        }
+        else
+        {
+            await File.WriteAllTextAsync(_originalPath, args.Text);
+        }
     }
 
     private void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RestartAsync();
