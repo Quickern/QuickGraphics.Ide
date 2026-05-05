@@ -61,7 +61,7 @@ public partial class MainWindow : Window
         string sourceText = "await ForCanvas(640, 480);\n\n";
 
         string usings = string.Empty;
-        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.Globals.cs"))
+        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
         {
             if (stream != null)
             {
