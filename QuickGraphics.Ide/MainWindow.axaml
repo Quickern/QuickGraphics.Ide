@@ -10,8 +10,10 @@
         <Button Margin="5" Click="RunButton_Click" HorizontalAlignment="Center">Compile and run</Button>
 
         <Grid Grid.Row="1" Background="#5d6b99">
-            <Grid x:Name="MainGrid" Margin="10" ColumnDefinitions="*">
-                <GridSplitter x:Name="Splitter" Grid.Column="1" ResizeDirection="Columns" Background="#5d6b99" IsVisible="True" />
+            <Grid x:Name="MainGrid" Margin="10" ColumnDefinitions="2*,0,0">
+                <GridSplitter x:Name="RunnerSplitter" Grid.Column="1" ResizeDirection="Columns" Background="#5d6b99" IsVisible="False" />
+
+                <Grid x:Name="RunnerGrid" Grid.Column="2" RowDefinitions="Auto,5,*" IsVisible="False" />
             </Grid>
         </Grid>
     </Grid>

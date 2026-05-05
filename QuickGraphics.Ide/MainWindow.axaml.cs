@@ -11,7 +11,9 @@ namespace QuickGraphics.Ide;
 public partial class MainWindow : Window
 {
     private Editor? _editor;
-    private ProgramRunner? _runner;
+
+    private CanvasView? _canvasView;
+    private LogView? _logView;
 
     public MainWindow()
     {
@@ -70,39 +72,89 @@ public partial class MainWindow : Window
 
         _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
 
-        Grid.SetRow(_editor, 1);
-
         MainGrid.Children.Add(_editor);
     }
 
-    private async void RunButton_Click(object? sender, RoutedEventArgs e)
+    private async void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RunOrStopAsync();
+
+    private async Task RunOrStopAsync()
     {
         if (_editor == null)
         {
             return;
         }
 
-        if (_runner != null)
+        if (_canvasView != null || _logView != null)
         {
-            MainGrid.Children.Remove(_runner);
-            MainGrid.ColumnDefinitions = new ColumnDefinitions("*");
-            Splitter.IsVisible = false;
-            _runner = null;
+            await StopAsync();
             return;
         }
 
+        await RunAsync();
+    }
+
+    private async Task RunAsync()
+    {
         Assembly assembly = (await _editor.Compile(_editor.SynchronousBreak, _editor.AsynchronousBreak)).Assembly;
 
-        if (assembly != null)
+        if (assembly == null)
         {
-            _runner = new ProgramRunner();
-
-            MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,5,*");
-            Grid.SetColumn(_runner, 2);
-            Splitter.IsVisible = true;
-            MainGrid.Children.Add(_runner);
-
-            _ = _runner.RunProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
+            return;
         }
+
+        QgAvaloniaProgram program = new QgAvaloniaProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
+
+        await Task.WhenAll(program.RunAsync(), GetCanvasViewAsync(program), GetLogViewAsync(program));
+
+        return;
+
+        void TurnOn()
+        {
+            MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,5,*");
+
+            RunnerSplitter.IsVisible = true;
+            RunnerGrid.IsVisible = true;
+        }
+
+        async Task GetCanvasViewAsync(QgAvaloniaProgram program)
+        {
+            _canvasView = await program.GetCanvasViewAsync();
+
+            TurnOn();
+
+            RunnerGrid.Children.Add(_canvasView);
+        }
+
+        async Task GetLogViewAsync(QgAvaloniaProgram program)
+        {
+            _logView = await program.GetLogViewAsync();
+            Grid.SetRow(_logView, 2);
+
+            TurnOn();
+
+            RunnerGrid.Children.Add(_logView);
+        }
+    }
+
+    private async Task StopAsync()
+    {
+        if (_canvasView != null)
+        {
+            RunnerGrid.Children.Remove(_canvasView);
+
+            _canvasView = null;
+        }
+
+        if (_logView != null)
+        {
+            RunnerGrid.Children.Remove(_logView);
+
+            _logView = null;
+        }
+
+        RunnerSplitter.IsVisible = false;
+        RunnerGrid.IsVisible = false;
+
+        MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,0,0");
     }
 }
