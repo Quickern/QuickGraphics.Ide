@@ -12,7 +12,7 @@ namespace QuickGraphics.Ide;
 
 public partial class MainWindow : Window
 {
-    private string? _originalPath;
+    private readonly CodeFile _file = new CodeFile();
 
     private Editor? _editor;
 
@@ -33,6 +33,30 @@ public partial class MainWindow : Window
 
     private async Task LoadEditor()
     {
+        Assembly assembly = typeof(StaticCanvas).Assembly;
+        CachedMetadataReference[] references = [
+            ..GetReferences(assembly)
+        ];
+
+        string sourceText = _file.Load() ?? $"await ForCanvas(640, 480);{Environment.NewLine}{Environment.NewLine}";
+
+        string usings = string.Empty;
+        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
+        {
+            if (stream != null)
+            {
+                using StreamReader reader = new StreamReader(stream);
+                usings = await reader.ReadToEndAsync();
+            }
+        }
+
+        _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
+        _editor.SaveRequested += OnSave;
+
+        MainGrid.Children.Add(_editor);
+
+        return;
+
         static IEnumerable<CachedMetadataReference> GetReferences(Assembly assembly)
         {
             Dictionary<string, CachedMetadataReference> assemblies = new Dictionary<string, CachedMetadataReference>();
@@ -56,28 +80,6 @@ public partial class MainWindow : Window
                 }
             }
         }
-
-        Assembly assembly = typeof(StaticCanvas).Assembly;
-        CachedMetadataReference[] references = [
-            ..GetReferences(assembly)
-        ];
-
-        string sourceText = "await ForCanvas(640, 480);\n\n";
-
-        string usings = string.Empty;
-        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
-        {
-            if (stream != null)
-            {
-                using StreamReader reader = new StreamReader(stream);
-                usings = await reader.ReadToEndAsync();
-            }
-        }
-
-        _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
-        _editor.SaveRequested += OnSave;
-
-        MainGrid.Children.Add(_editor);
     }
 
     private async void OnSave(object? sender, SaveEventArgs args)
