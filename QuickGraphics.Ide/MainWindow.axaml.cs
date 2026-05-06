@@ -12,7 +12,7 @@ namespace QuickGraphics.Ide;
 
 public partial class MainWindow : Window
 {
-    private readonly CodeFile _file = new CodeFile();
+    private readonly CodeFile _file;
 
     private Editor? _editor;
 
@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        _file = new CodeFile(this);
+        _file.FileNameChanged += name => Title.Text = name;
     }
 
     protected override void OnOpened(EventArgs e)
@@ -38,7 +41,8 @@ public partial class MainWindow : Window
             ..GetReferences(assembly)
         ];
 
-        string sourceText = _file.Load() ?? $"await ForCanvas(640, 480);{Environment.NewLine}{Environment.NewLine}";
+        string sourceText = await _file.LoadAsync();
+        string guid = _file.Guid;
 
         string usings = string.Empty;
         using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
@@ -50,7 +54,7 @@ public partial class MainWindow : Window
             }
         }
 
-        _editor = await Editor.Create(sourceText, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
+        _editor = await Editor.Create(sourceText, guid: guid, preSource: usings, references: references, compilationOptions: new CSharpCompilationOptions(OutputKind.ConsoleApplication, nullableContextOptions: NullableContextOptions.Enable));
         _editor.SaveRequested += OnSave;
 
         MainGrid.Children.Add(_editor);
@@ -84,39 +88,7 @@ public partial class MainWindow : Window
 
     private async void OnSave(object? sender, SaveEventArgs args)
     {
-        if (_originalPath == null)
-        {
-            TopLevel topLevel = TopLevel.GetTopLevel(this);
-
-            IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-            {
-                FileTypeChoices = [
-                    new FilePickerFileType("C#")
-                    {
-                        Patterns = [ "*.cs" ],
-                        AppleUniformTypeIdentifiers = [ "com.microsoft.csharp-source" ],
-                        MimeTypes = [ "text/x-csharp" ]
-                    }
-                ]
-            });
-
-            if (file == null)
-            {
-                return;
-            }
-
-            await using Stream stream = await file.OpenWriteAsync();
-            await using StreamWriter writer = new StreamWriter(stream);
-
-            await writer.WriteAsync(args.Text);
-
-            Title.Text = file.Name;
-            _originalPath = file.Path.AbsolutePath;
-        }
-        else
-        {
-            await File.WriteAllTextAsync(_originalPath, args.Text);
-        }
+        _ = _file.SaveAsync(args.Text);
     }
 
     private void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RestartAsync();
