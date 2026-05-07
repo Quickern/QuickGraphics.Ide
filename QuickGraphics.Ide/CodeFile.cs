@@ -65,7 +65,7 @@ public class CodeFile(Visual visual) : IDisposable
         return Task.Run(() => Load(file));
     }
 
-    public async Task<string> OpenAsync()
+    public async Task<string?> GetFileToOpenAsync()
     {
         TopLevel? topLevel = TopLevel.GetTopLevel(_visual);
         Debug.Assert(topLevel != null, "Top level is null. Possibly closed?");
@@ -78,10 +78,13 @@ public class CodeFile(Visual visual) : IDisposable
 
         if (result.Count < 1)
         {
-            throw new FileNotFoundException("Can't open file");
+            // throw new FileNotFoundException("Can't open file");
+            // TODO: Show error?
+            Console.WriteLine("Can't open file");
+            return null;
         }
 
-        return await Task.Run(() => Open(result[0].Path.AbsolutePath));
+        return result[0].Path.AbsolutePath;
     }
 
     public async Task SaveAsync(string text)

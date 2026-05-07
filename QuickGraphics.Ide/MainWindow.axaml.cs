@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -18,6 +19,8 @@ public partial class MainWindow : Window
     private CanvasView? _canvasView;
     private LogView? _logView;
 
+    private readonly string? _fileToOpen;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -26,11 +29,16 @@ public partial class MainWindow : Window
         _file.FileNameChanged += name => Title.Text = name ?? "Loading...";
     }
 
+    public MainWindow(string fileToOpen) : this()
+    {
+        _fileToOpen = fileToOpen;
+    }
+
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
 
-        _ = ReloadEditor();
+        _ = ReloadEditor(_fileToOpen);
     }
 
     private async Task ReloadEditor(string? filePath = null)
@@ -38,6 +46,12 @@ public partial class MainWindow : Window
         await StopAsync();
 
         DisableButtons();
+
+        if (_editor != null)
+        {
+            MainGrid.Children.Remove(_editor);
+            _editor = null;
+        }
 
         Assembly assembly = typeof(StaticCanvas).Assembly;
         CachedMetadataReference[] references = [
@@ -91,13 +105,28 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void OnSave(object? sender, SaveEventArgs args)
-    {
-        _ = _file.SaveAsync(args.Text);
-    }
+    private async void OnSave(object? sender, SaveEventArgs args) => _ = _file.SaveAsync(args.Text);
 
     private void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RestartAsync();
     private void StopButton_Click(object? sender, RoutedEventArgs e) => _ = StopAsync();
+
+    private void MenuNew_Click(object? sender, RoutedEventArgs e) => throw new NotImplementedException();
+
+    private async void MenuOpen_Click(object? sender, RoutedEventArgs e)
+    {
+        string? fileName = await _file.GetFileToOpenAsync();
+        if (fileName == null)
+        {
+            return;
+        }
+
+        await ReloadEditor(fileName);
+    }
+
+    private void MenuNewWindow_Click(object? sender, RoutedEventArgs e) => new MainWindow().Show();
+    private void MenuExit_Click(object? sender, RoutedEventArgs e) => Close();
+    private void MenuPublish_Click(object? sender, RoutedEventArgs e) => throw new NotImplementedException();
+
 
     private async Task RestartAsync()
     {
@@ -116,6 +145,11 @@ public partial class MainWindow : Window
 
     private async Task RunAsync()
     {
+        if (_editor == null)
+        {
+            return;
+        }
+
         DisableButtons();
 
         Assembly assembly = (await _editor.Compile(_editor.SynchronousBreak, _editor.AsynchronousBreak)).Assembly;
