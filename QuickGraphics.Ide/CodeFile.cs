@@ -19,12 +19,15 @@ public class CodeFile(Visual visual) : IDisposable
         MimeTypes = [ "text/x-csharp" ]
     };
 
+    private static readonly string s_defaultCode = $"await ForCanvas(640, 480);{Environment.NewLine}{Environment.NewLine}";
+
     private static string ApplicationDataDirectory => field ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), Assembly.GetEntryAssembly()?.GetName().Name ?? "QuickGraphics.Ide");
 
     private static string StateFile => field ??= Path.Combine(ApplicationDataDirectory, "ide_state.json");
     private static string IdCacheFile => field ??= Path.Combine(ApplicationDataDirectory, "id_cache.json");
 
-    private static Mutex _mutex = new Mutex(false, "QuickGraphics.Ide.CodeFile.Cache");
+    private readonly Mutex _cacheMutex = new Mutex(false, "QuickGraphics.Ide.CodeFile.Cache");
+    private Mutex? _fileMutex;
 
     public event Action<string>? FileNameChanged;
 
@@ -44,25 +47,41 @@ public class CodeFile(Visual visual) : IDisposable
         }
     }
 
-    public string Guid { get => field ?? throw new NotImplementedException(); private set; }
+    public string Guid
+    {
+        get => field ?? throw new NotImplementedException();
+        private set;
+    }
+
     public string? FilePath
     {
         get;
         private set
         {
-            if (field == value)
-            {
-                return;
-            }
-
             field = value;
-            FileName = field != null ? Path.GetFileName(field) : "NewProject.cs";
+
+            FileName = field != null ? Path.GetFileName(field) : "New.cs";
         }
     }
 
-    public Task<string> LoadAsync(string? file = null)
+    public async Task<string> LoadAsync(string? file = null)
     {
-        return Task.Run(() => Load(file));
+        string text = await Task.Run(() => Load(file));
+        LockFile();
+        return text;
+    }
+
+    public async Task CreateNewAsync()
+    {
+        await Task.Run(() =>
+        {
+            using MutexLock mutexLock = _cacheMutex.Acquire();
+
+            State state = LoadCache<State>(StateFile);
+            CreateNew(state);
+        });
+
+        LockFile();
     }
 
     public async Task<string?> GetFileToOpenAsync()
@@ -84,7 +103,7 @@ public class CodeFile(Visual visual) : IDisposable
             return null;
         }
 
-        return result[0].Path.AbsolutePath;
+        return await Task.Run(() => GetFileToOpen(result[0].Path.AbsolutePath));
     }
 
     public async Task SaveAsync(string text)
@@ -115,9 +134,9 @@ public class CodeFile(Visual visual) : IDisposable
         await Task.Run(() => Save(file.Path.AbsolutePath, text));
     }
 
-    public string Load(string? file = null)
+    private string Load(string? file = null)
     {
-        using MutexLock mutexLock = _mutex.Acquire();
+        using MutexLock mutexLock = _cacheMutex.Acquire();
 
         State state = LoadCache<State>(StateFile);
 
@@ -126,57 +145,111 @@ public class CodeFile(Visual visual) : IDisposable
             return text;
         }
 
-        if (state.LastFileId != null)
+        if (state.LastFileId == null)
         {
-            IdCache cache = LoadCache<IdCache>(IdCacheFile);
+            return CreateNew(state);
+        }
 
-            if (cache.Ids.TryGetValue(state.LastFileId, out file) && File.Exists(file))
+        if (IsFileLocked(state.LastFileId))
+        {
+            return CreateNew(state);
+        }
+
+        IdCache cache = LoadCache<IdCache>(IdCacheFile);
+
+        if (cache.Ids.TryGetValue(state.LastFileId, out file))
+        {
+            if (!File.Exists(file))
             {
-                text = File.ReadAllText(file);
-
-                Guid = state.LastFileId;
-                FilePath = file;
-
-                return text;
+                return CreateNew(state);
             }
+
+            text = File.ReadAllText(file);
+
+            Guid = state.LastFileId;
+            FilePath = file;
+
+            return text;
         }
 
-        if (state.LastUnsavedId != null)
-        {
-            Guid = state.LastUnsavedId;
-        }
-        else
-        {
-            state.LastUnsavedId = Guid = NewGuid();
-            SaveCache(StateFile, state);
-        }
+        Guid = state.LastFileId;
+        FilePath = null;
+        return s_defaultCode;
+    }
+
+    private string CreateNew(State state)
+    {
+        state.LastFileId = Guid = NewGuid();
+        SaveCache(StateFile, state);
 
         FilePath = null;
 
-        return $"await ForCanvas(640, 480);{Environment.NewLine}{Environment.NewLine}";
+        return s_defaultCode;
     }
 
     public void Dispose()
     {
-        _mutex.Dispose();
+        _cacheMutex.Dispose();
+
+        _fileMutex?.ReleaseMutex();
+        _fileMutex?.Dispose();
+        _fileMutex = null;
     }
 
-    private string Open(string file)
+    private static Mutex GetFileMutex(string guid) => new Mutex(false, $"QuickGraphics.Ide.CodeFile.{guid}");
+    private static bool IsFileLocked(string guid)
     {
-        using MutexLock mutexLock = _mutex.Acquire();
+        using Mutex mutex = GetFileMutex(guid);
+        return mutex.IsLocked;
+    }
+    private void LockFile()
+    {
+        _fileMutex?.ReleaseMutex();
+        _fileMutex?.Dispose();
 
-        State state = LoadCache<State>(StateFile);
-        if (TryOpenFile(file, state, out string? text))
+        _fileMutex = GetFileMutex(Guid);
+        _fileMutex.WaitOne();
+    }
+
+    private string? GetFileToOpen(string file)
+    {
+        if (!File.Exists(file))
         {
-            return text;
+            return null;
         }
 
-        throw new FileNotFoundException("Can't open file!", file);
+        using MutexLock mutexLock = _cacheMutex.Acquire();
+
+        IdCache cache = LoadCache<IdCache>(IdCacheFile);
+
+        ReadOnlySpan<string> ids = [..cache.Ids.Where(x => x.Value == file).Select(x => x.Key)];
+        if (ids.IsEmpty)
+        {
+            return file;
+        }
+
+        if (ids.Length > 1)
+        {
+            foreach (string key in ids[1..])
+            {
+                cache.Ids.Remove(key);
+            }
+
+            SaveCache(IdCacheFile, cache);
+        }
+
+        string guid = ids[0];
+        if (IsFileLocked(guid))
+        {
+            return null;
+        }
+
+        return file;
     }
 
     private void Save(string file, string text)
     {
-        using MutexLock mutexLock = _mutex.Acquire();
+        using MutexLock mutexLock = _cacheMutex.Acquire();
 
         File.WriteAllText(file, text);
 
@@ -188,7 +261,6 @@ public class CodeFile(Visual visual) : IDisposable
 
         State state = LoadCache<State>(StateFile);
         state.LastFileId = Guid;
-        state.LastUnsavedId = null;
         SaveCache(StateFile, state);
     }
 
@@ -218,10 +290,19 @@ public class CodeFile(Visual visual) : IDisposable
             }
 
             guid = ids[0];
+
+            if (IsFileLocked(guid))
+            {
+                text = null;
+                return false;
+            }
         }
         else
         {
             guid = NewGuid();
+
+            cache.Ids[guid] = file;
+            SaveCache(IdCacheFile, cache);
         }
 
         text = File.ReadAllText(file);
@@ -248,7 +329,7 @@ public class CodeFile(Visual visual) : IDisposable
             Directory.CreateDirectory(filePath);
         }
 
-        using Stream stream = File.OpenWrite(filePath);
+        using Stream stream = File.Open(filePath, FileMode.Create, FileAccess.Write);
         JsonSerializer.Serialize<T>(stream, value);
     }
 
@@ -275,7 +356,6 @@ public class CodeFile(Visual visual) : IDisposable
     private class State
     {
         public string? LastFileId { get; set; }
-        public string? LastUnsavedId { get; set; }
     }
 
     private record class IdCache(Dictionary<string, string> Ids)

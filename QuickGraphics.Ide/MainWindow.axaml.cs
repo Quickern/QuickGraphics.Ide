@@ -41,6 +41,13 @@ public partial class MainWindow : Window
         _ = ReloadEditor(_fileToOpen);
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+
+        _file.Dispose();
+    }
+
     private async Task ReloadEditor(string? filePath = null)
     {
         await StopAsync();

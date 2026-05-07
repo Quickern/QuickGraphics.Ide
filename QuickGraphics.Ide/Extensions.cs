@@ -9,6 +9,19 @@ public static class Extensions
             mutex.WaitOne();
             return new MutexLock(mutex);
         }
+
+        public bool IsLocked
+        {
+            get
+            {
+                bool result = mutex.WaitOne(0);
+                if (result)
+                {
+                    mutex.ReleaseMutex();
+                }
+                return !result;
+            }
+        }
     }
 }
 
