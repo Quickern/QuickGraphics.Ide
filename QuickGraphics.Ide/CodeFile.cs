@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
@@ -27,9 +28,9 @@ public class CodeFile(Visual visual) : IDisposable
 
     public event Action<string>? FileNameChanged;
 
-    public string FileName
+    public string? FileName
     {
-        get => field ??= "NewProject.cs";
+        get;
         private set
         {
             if (field == value)
@@ -66,7 +67,8 @@ public class CodeFile(Visual visual) : IDisposable
 
     public async Task<string> OpenAsync()
     {
-        TopLevel topLevel = TopLevel.GetTopLevel(_visual);
+        TopLevel? topLevel = TopLevel.GetTopLevel(_visual);
+        Debug.Assert(topLevel != null, "Top level is null. Possibly closed?");
 
         IReadOnlyList<IStorageFile> result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
@@ -90,7 +92,12 @@ public class CodeFile(Visual visual) : IDisposable
             return;
         }
 
-        TopLevel topLevel = TopLevel.GetTopLevel(_visual);
+        TopLevel? topLevel = TopLevel.GetTopLevel(_visual);
+        if (topLevel == null)
+        {
+            Console.WriteLine("Top level is null. Possibly closed?");
+            return;
+        }
 
         using IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {

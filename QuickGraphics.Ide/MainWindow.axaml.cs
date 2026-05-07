@@ -2,7 +2,6 @@ using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
 using CSharpEditor;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -24,24 +23,28 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _file = new CodeFile(this);
-        _file.FileNameChanged += name => Title.Text = name;
+        _file.FileNameChanged += name => Title.Text = name ?? "Loading...";
     }
 
     protected override void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
 
-        _ = LoadEditor();
+        _ = ReloadEditor();
     }
 
-    private async Task LoadEditor()
+    private async Task ReloadEditor(string? filePath = null)
     {
+        await StopAsync();
+
+        DisableButtons();
+
         Assembly assembly = typeof(StaticCanvas).Assembly;
         CachedMetadataReference[] references = [
             ..GetReferences(assembly)
         ];
 
-        string sourceText = await _file.LoadAsync();
+        string sourceText = await _file.LoadAsync(filePath);
         string guid = _file.Guid;
 
         string usings = string.Empty;
@@ -58,6 +61,8 @@ public partial class MainWindow : Window
         _editor.SaveRequested += OnSave;
 
         MainGrid.Children.Add(_editor);
+
+        SetButtonState(false);
 
         return;
 
@@ -111,18 +116,23 @@ public partial class MainWindow : Window
 
     private async Task RunAsync()
     {
-        RunButton.IsEnabled = false;
-        RestartButton.IsEnabled = false;
-        StopButton.IsEnabled = false;
+        DisableButtons();
 
         Assembly assembly = (await _editor.Compile(_editor.SynchronousBreak, _editor.AsynchronousBreak)).Assembly;
-
         if (assembly == null)
         {
+            // TODO: Show error
             return;
         }
 
-        QgAvaloniaProgram program = new QgAvaloniaProgram(() => assembly.EntryPoint.Invoke(null, new object[assembly.EntryPoint.GetParameters().Length]));
+        MethodInfo? entry = assembly.EntryPoint;
+        if (entry == null)
+        {
+            // TODO: Show error
+            return;
+        }
+
+        QgAvaloniaProgram program = new QgAvaloniaProgram(() => entry.Invoke(null, new object[entry.GetParameters().Length]));
 
         await Task.WhenAll(program.RunAsync(), GetCanvasViewAsync(program), GetLogViewAsync(program));
 
@@ -160,6 +170,8 @@ public partial class MainWindow : Window
 
     private async Task StopAsync()
     {
+        DisableButtons();
+
         if (_canvasView != null)
         {
             RunnerGrid.Children.Remove(_canvasView);
@@ -182,10 +194,21 @@ public partial class MainWindow : Window
         MainGrid.ColumnDefinitions = new ColumnDefinitions("2*,0,0");
     }
 
+    private void DisableButtons()
+    {
+        RunButton.IsEnabled = false;
+        RestartButton.IsEnabled = false;
+        StopButton.IsEnabled = false;
+
+        RunMenu.IsEnabled = false;
+        StopMenu.IsEnabled = false;
+    }
+
     private void SetButtonState(bool isPlaying)
     {
         RunButton.IsVisible = !isPlaying;
         RunButton.IsEnabled = true;
+        RunMenu.IsEnabled = true;
 
         RestartButton.IsVisible = isPlaying;
         RestartButton.IsEnabled = true;
@@ -195,5 +218,6 @@ public partial class MainWindow : Window
         {
             StopButtonImage.Source = (IImage)icon!;
         }
+        StopMenu.IsEnabled = isPlaying;
     }
 }
