@@ -48,7 +48,7 @@ public partial class MainWindow : Window
         _file.Dispose();
     }
 
-    private async Task ReloadEditor(string? filePath = null)
+    private async Task ReloadEditor(string? filePath = null, bool createNew = false)
     {
         await StopAsync();
 
@@ -65,7 +65,7 @@ public partial class MainWindow : Window
             ..GetReferences(assembly)
         ];
 
-        string sourceText = await _file.LoadAsync(filePath);
+        string sourceText = createNew ? await _file.CreateNewAsync() : await _file.LoadAsync(filePath);
         string guid = _file.Guid;
 
         string usings = string.Empty;
@@ -117,7 +117,7 @@ public partial class MainWindow : Window
     private void RunButton_Click(object? sender, RoutedEventArgs e) => _ = RestartAsync();
     private void StopButton_Click(object? sender, RoutedEventArgs e) => _ = StopAsync();
 
-    private void MenuNew_Click(object? sender, RoutedEventArgs e) => throw new NotImplementedException();
+    private void MenuNew_Click(object? sender, RoutedEventArgs e) => _ = ReloadEditor(createNew: true);
 
     private async void MenuOpen_Click(object? sender, RoutedEventArgs e)
     {

@@ -71,17 +71,19 @@ public class CodeFile(Visual visual) : IDisposable
         return text;
     }
 
-    public async Task CreateNewAsync()
+    public async Task<string> CreateNewAsync()
     {
-        await Task.Run(() =>
+        string text = await Task.Run(() =>
         {
             using MutexLock mutexLock = _cacheMutex.Acquire();
 
             State state = LoadCache<State>(StateFile);
-            CreateNew(state);
+            return CreateNew(state);
         });
 
         LockFile();
+
+        return text;
     }
 
     public async Task<string?> GetFileToOpenAsync()
@@ -92,7 +94,8 @@ public class CodeFile(Visual visual) : IDisposable
         IReadOnlyList<IStorageFile> result = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = false,
-            FileTypeFilter = [ s_csFileType ]
+            FileTypeFilter = [ s_csFileType ],
+            SuggestedFileType = s_csFileType
         });
 
         if (result.Count < 1)
@@ -123,7 +126,9 @@ public class CodeFile(Visual visual) : IDisposable
 
         using IStorageFile? file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            FileTypeChoices = [ s_csFileType ]
+            FileTypeChoices = [ s_csFileType ],
+            SuggestedFileType = s_csFileType,
+            SuggestedFileName = "New.cs"
         });
 
         if (file == null)
