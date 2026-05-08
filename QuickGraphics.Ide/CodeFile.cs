@@ -331,7 +331,7 @@ public class CodeFile(Visual visual) : IDisposable
         string dir = Path.GetDirectoryName(filePath)!;
         if (!Directory.Exists(dir))
         {
-            Directory.CreateDirectory(filePath);
+            Directory.CreateDirectory(dir);
         }
 
         using Stream stream = File.Open(filePath, FileMode.Create, FileAccess.Write);

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -95,10 +94,14 @@ public partial class MainWindow : Window
 
             static void GetReferences(Assembly assembly, Dictionary<string, CachedMetadataReference> assemblies)
             {
-                if (assemblies.ContainsKey(assembly.FullName))
+                string? fullName = assembly.FullName;
+                if (fullName != null && assemblies.ContainsKey(fullName))
                     return;
 
-                assemblies.Add(assembly.FullName, CachedMetadataReference.CreateFromFile(assembly.Location));
+                if (fullName != null)
+                {
+                    assemblies.Add(fullName, CachedMetadataReference.CreateFromFile(assembly.Location));
+                }
 
                 foreach (AssemblyName name in assembly.GetReferencedAssemblies())
                 {
