@@ -65,7 +65,7 @@ public partial class MainWindow : Window
             ..GetReferences(assembly)
         ];
 
-        string sourceText = createNew ? await _file.CreateNewAsync() : await _file.LoadAsync(filePath);
+        string? sourceText = createNew ? await _file.CreateNewAsync() : await _file.LoadAsync(filePath);
         string guid = _file.Guid;
 
         string usings = string.Empty;
@@ -163,6 +163,7 @@ public partial class MainWindow : Window
         if (assembly == null)
         {
             // TODO: Show error
+            SetButtonState(false);
             return;
         }
 
@@ -170,6 +171,7 @@ public partial class MainWindow : Window
         if (entry == null)
         {
             // TODO: Show error
+            SetButtonState(false);
             return;
         }
 

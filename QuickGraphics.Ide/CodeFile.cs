@@ -64,9 +64,9 @@ public class CodeFile(Visual visual) : IDisposable
         }
     }
 
-    public async Task<string> LoadAsync(string? file = null)
+    public async Task<string?> LoadAsync(string? file = null)
     {
-        string text = await Task.Run(() => Load(file));
+        string? text = await Task.Run(() => Load(file));
         LockFile();
         return text;
     }
@@ -139,7 +139,7 @@ public class CodeFile(Visual visual) : IDisposable
         await Task.Run(() => Save(file.Path.AbsolutePath, text));
     }
 
-    private string Load(string? file = null)
+    private string? Load(string? file = null)
     {
         using MutexLock mutexLock = _cacheMutex.Acquire();
 
@@ -179,7 +179,7 @@ public class CodeFile(Visual visual) : IDisposable
 
         Guid = state.LastFileId;
         FilePath = null;
-        return s_defaultCode;
+        return null;
     }
 
     private string CreateNew(State state)
