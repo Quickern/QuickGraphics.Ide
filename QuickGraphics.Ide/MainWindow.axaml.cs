@@ -5,7 +5,7 @@ using Avalonia.Media;
 using CSharpEditor;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using QuickGraphics.Avalonia.Common;
+using QuickGraphics.AvaloniaQg;
 
 namespace QuickGraphics.Ide;
 
@@ -59,7 +59,7 @@ public partial class MainWindow : Window
             _editor = null;
         }
 
-        Assembly assembly = typeof(StaticCanvas).Assembly;
+        Assembly assembly = typeof(QgCanvas).Assembly;
         CachedMetadataReference[] references = [
             ..GetReferences(assembly)
         ];
@@ -68,7 +68,7 @@ public partial class MainWindow : Window
         string guid = _file.Guid;
 
         string usings = string.Empty;
-        using (Stream? stream = typeof(StaticCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
+        using (Stream? stream = typeof(QgCanvas).Assembly.GetManifestResourceStream("QuickGraphics.QgImplicitUsings.cs"))
         {
             if (stream != null)
             {

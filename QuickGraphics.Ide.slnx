@@ -4,7 +4,8 @@
   </Folder>
 
   <Folder Name="/QuickGraphics/">
-    <Project Path="QuickGraphics/QuickGraphics.Avalonia.Common/QuickGraphics.Avalonia.Common.csproj" />
+    <Project Path="QuickGraphics/QuickGraphics.AvaloniaQg/QuickGraphics.AvaloniaQg.csproj" />
+    <Project Path="QuickGraphics/QuickGraphics.Tests/QuickGraphics.Tests.csproj" />
     <Project Path="QuickGraphics/QuickGraphics/QuickGraphics.csproj" />
   </Folder>
 

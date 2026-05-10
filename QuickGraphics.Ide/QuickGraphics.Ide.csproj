@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../CSharpEditor/CSharpEditor/CSharpEditor.csproj" />
-    <ProjectReference Include="../QuickGraphics/QuickGraphics.Avalonia.Common/QuickGraphics.Avalonia.Common.csproj" />
+    <ProjectReference Include="../QuickGraphics/QuickGraphics.AvaloniaQg/QuickGraphics.AvaloniaQg.csproj" />
     <ProjectReference Include="../QuickGraphics/QuickGraphics/QuickGraphics.csproj" />
   </ItemGroup>
 </Project>
