@@ -13,6 +13,10 @@ class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .With(new AvaloniaNativePlatformOptions()
+            {
+                RenderingMode = [AvaloniaNativeRenderingMode.OpenGl]
+            })
             .WithInterFont()
             .LogToTrace();
 }
