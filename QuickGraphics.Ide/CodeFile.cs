@@ -106,7 +106,7 @@ public class CodeFile(Visual visual) : IDisposable
             return null;
         }
 
-        return await Task.Run(() => GetFileToOpen(result[0].Path.AbsolutePath));
+        return await Task.Run(() => GetFileToOpen(result[0].TryGetLocalPath()));
     }
 
     public async Task SaveAsync(string text)
@@ -136,7 +136,7 @@ public class CodeFile(Visual visual) : IDisposable
             return;
         }
 
-        await Task.Run(() => Save(file.Path.AbsolutePath, text));
+        await Task.Run(() => Save(file.TryGetLocalPath(), text));
     }
 
     private string? Load(string? file = null)
@@ -216,9 +216,9 @@ public class CodeFile(Visual visual) : IDisposable
         _fileMutex.WaitOne();
     }
 
-    private string? GetFileToOpen(string file)
+    private string? GetFileToOpen(string? file)
     {
-        if (!File.Exists(file))
+        if (file == null || !File.Exists(file))
         {
             return null;
         }
@@ -252,8 +252,15 @@ public class CodeFile(Visual visual) : IDisposable
         return file;
     }
 
-    private void Save(string file, string text)
+    private void Save(string? file, string text)
     {
+        if (file == null)
+        {
+            // TODO: Show error?
+            Console.WriteLine("Can't open file");
+            return;
+        }
+
         using MutexLock mutexLock = _cacheMutex.Acquire();
 
         File.WriteAllText(file, text);
