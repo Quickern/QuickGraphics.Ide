@@ -180,9 +180,15 @@ public partial class MainWindow : Window
 
         QgAvaloniaProgram program = new QgAvaloniaProgram(() => entry.Invoke(null, new object[entry.GetParameters().Length]));
 
-        await Task.WhenAll(program.RunAsync(), GetCanvasViewAsync(program), GetLogViewAsync(program));
+        await Task.WhenAll(GetCanvasViewAsync(program), RunWithLogs());
 
         return;
+
+        async Task RunWithLogs()
+        {
+            await GetLogViewAsync(program);
+            await program.RunAsync();
+        }
 
         void TurnOn()
         {
